@@ -1,60 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Threading.Tasks;
+using GeometryProcessor;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GeometryApi.Controllers
 {
+    /// <summary>
+    /// Geometry controller
+    /// </summary>
+    /// <seealso cref="Microsoft.AspNetCore.Mvc.Controller" />
     [Route("api/[controller]")]
     public class GeometryController : Controller
     {
-        private enum rows
+        /// <summary>
+        /// The shapes processor
+        /// </summary>
+        private readonly IShapesProcessor _shapesProcessor = null;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GeometryController"/> class.
+        /// </summary>
+        /// <param name="shapesProcessor">The shapes processor.</param>
+        public GeometryController(IShapesProcessor shapesProcessor)
         {
-            A = 0,
-            B = 1,
-            C = 2,
-            D = 3,
-            E = 4,
-            F = 5
-        };
-
-        [HttpGet]
-        public ActionResult GetCoordinates(string sRow, int nCol)
-        {
-            List<Point> ret = new List<Point>();
-            int nRow = (int)Enum.Parse(typeof(rows), sRow);
-
-            if (nCol % 2 == 0)
-            {
-                //top
-                ret.Add(new Point(nRow * 10, ((nCol / 2) - 1) * 10));
-                ret.Add(new Point((nRow * 10) + 10, ((nCol / 2) - 1) * 10));
-                ret.Add(new Point((nRow * 10) + 10, (((nCol / 2) - 1) * 10) + 10));
-            }
-            else
-            {
-                //bottom
-                nCol = Convert.ToInt32(Math.Floor(Convert.ToDouble(nCol / 2)));
-                ret.Add(new Point(nRow * 10, nCol * 10));
-                ret.Add(new Point(nRow * 10, (nCol * 10) + 10));
-                ret.Add(new Point((nRow * 10) + 10, (nCol * 10) + 10));
-            }
-
-            return Ok(ret);
+            _shapesProcessor = shapesProcessor;
         }
 
+        /// <summary>
+        /// Gets the coordinates.
+        /// </summary>
+        /// <param name="sRow">The s row.</param>
+        /// <param name="nCol">The n col.</param>
+        /// <returns></returns>
         [HttpGet]
-        public ActionResult GetLocation(List<Point> coordinates)
+        [Route("coordinates")]
+        public ActionResult GetCoordinates(string row, int col)
         {
-            int row = Math.Max(coordinates[0].Y, Math.Max(coordinates[1].Y, coordinates[2].Y)) / 10;
+            return Ok(_shapesProcessor.GetCoordinates(row, col));
+        }
 
-            int colMax = Math.Max(coordinates[0].X, Math.Max(coordinates[1].X, coordinates[2].X));
-
-            int col = coordinates.Count(p2 => p2.X == colMax) == 2 ? (colMax / 10) * 2 : ((colMax / 10) * 2) - 1;
-
-            return Ok(new Point(col, row));
+        /// <summary>
+        /// Gets the location.
+        /// </summary>
+        /// <param name="v1x">The V1X.</param>
+        /// <param name="v1y">The v1y.</param>
+        /// <param name="v2x">The V2X.</param>
+        /// <param name="v2y">The v2y.</param>
+        /// <param name="v3x">The V3X.</param>
+        /// <param name="v3y">The v3y.</param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("location")]
+        public ActionResult GetLocation(int v1x, int v1y, int v2x, int v2y, int v3x, int v3y)
+        {
+            List<Point> coordinates = new List<Point>() { new Point(v1x, v1y), new Point(v2x, v2y), new Point(v3x, v3y) };
+            return Ok(_shapesProcessor.GetLocation(coordinates));
         }
     }
 }
